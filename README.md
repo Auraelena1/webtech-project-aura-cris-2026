@@ -7,16 +7,16 @@ A web application designed for managing student attendance using QR codes and ma
 
 ---
 
-## 👥 Developers
+## Developers
 - **Dragomir Aura** and **Cristina Lapusneanu** - Faculty of Cybernetics, Statistics and Economic Informatics (CSIE)
 
-## 🌐 Deployment Links
+## Deployment Links
 - **Frontend UI**: [https://aura-attendance.onrender.com/](https://aura-attendance.onrender.com/)
 - **Backend API**: [https://webtech-project-aura-cris-2026.onrender.com/](https://webtech-project-aura-cris-2026.onrender.com/)
 
 ---
 
-## 📝 Description
+## Description
 The application facilitates the attendance process in an academic environment:
 * **Organizers** can initialize sessions, generate unique access codes, and monitor the student list in real-time.
 * **Students** can register their presence by scanning a QR code or entering a 6-character code.
@@ -25,7 +25,7 @@ The application facilitates the attendance process in an academic environment:
 
 ---
 
-## 🛠 Technologies Used
+## Technologies Used
 
 ### Backend
 - **Node.js** - JavaScript runtime
@@ -43,7 +43,7 @@ The application facilitates the attendance process in an academic environment:
 
 ---
 
-## 🚀 How to run the project locally?
+## How to run the project locally?
 
 ### Prerequisites
 - Node.js installed ([https://nodejs.org](https://nodejs.org))
@@ -80,7 +80,7 @@ npm run dev
 
 ---
 
-## 🔌 API Endpoints and Testing
+## API Endpoints and Testing
 
 To test the API independently of the UI, you can use Postman or any HTTP client.
 
@@ -125,7 +125,7 @@ To test the API independently of the UI, you can use Postman or any HTTP client.
 
 ---
 
-## 🔄 Roles and Workflow
+## Roles and Workflow
 
 ### Organizer Mode
 
@@ -142,7 +142,7 @@ To test the API independently of the UI, you can use Postman or any HTTP client.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ### `Backend/` - Server-side logic and database
 
