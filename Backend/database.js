@@ -1,10 +1,15 @@
 const { Sequelize } = require('sequelize');
 
-// Creăm o instanță de Sequelize care va salva datele într-un fișier local
+/**
+ * DATABASE CONFIGURATION
+ * We are using Sequelize as our ORM to interact with a relational database.
+ * For this project, SQLite is used as the storage engine because it's serverless 
+ * and saves data into a local file, making it perfect for development and demos.
+ */
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: './database.sqlite', // Aici se va crea fișierul bazei de date
-    logging: false // Ca să nu ne umple terminalul cu log-uri SQL
+    storage: './database.sqlite', // The local file where our data lives
+    logging: false // Disabled logging to keep the terminal clean during testing
 });
 
 module.exports = sequelize;

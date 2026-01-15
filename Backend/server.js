@@ -1,38 +1,40 @@
 /**
- * Server principal pentru aplicatia de monitorizare prezenta.
- * Tehnologii: Node.js, Express, Sequelize (ORM), Axios (External API).
+ * MAIN SERVER ENTRY POINT
+ * Implementation of the RESTful API for the Attendance Monitoring System.
+ * Tech Stack: Node.js, Express, Sequelize (ORM), and Axios for External API calls.
  */
 
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios'); // Pentru integrarea API-ului extern
+const axios = require('axios');
 const sequelize = require('./database');
 const { EventGroup, Event, Attendance } = require('./models');
 
 const app = express();
+// Port configuration: process.env.PORT is required for deployment on Render
 const PORT = process.env.PORT || 5001;
 
-// Middlewares
+// Middlewares for handling cross-origin requests and JSON parsing
 app.use(cors());
 app.use(express.json());
 
 /**
- * Functie utilitara pentru generarea unui cod de acces aleatoriu.
- * @returns {string} Un cod format din 6 caractere alfanumerice.
+ * Utility function to generate a unique 6-character access code for students.
+ * @returns {string} Random alphanumeric code.
  */
 const generateAccessCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-// --- RUTE API RESTFUL ---
+// --- RESTful API ROUTES ---
 
 /**
- * Ruta de test pentru a verifica disponibilitatea serverului.
+ * Basic health check route.
  */
 app.get('/', (req, res) => {
-    res.send("API-ul de monitorizare prezenta este functional.");
+    res.send("Attendance Monitoring API is live and running.");
 });
 
 /**
- * Creeaza un nou grup de evenimente.
+ * Creates a new event group (e.g., a specific class or semester).
  * @route POST /groups
  */
 app.post('/groups', async (req, res) => {
@@ -45,7 +47,7 @@ app.post('/groups', async (req, res) => {
 });
 
 /**
- * Creeaza un eveniment nou in cadrul unui grup existent.
+ * Creates a new session/event for a specific group.
  * @route POST /groups/:groupId/events
  */
 app.post('/groups/:groupId/events', async (req, res) => {
@@ -63,13 +65,13 @@ app.post('/groups/:groupId/events', async (req, res) => {
 });
 
 /**
- * Actualizeaza statusul unui eveniment (OPEN/CLOSED).
+ * Updates the session status (Open for scan / Closed).
  * @route PATCH /events/:id/status
  */
 app.patch('/events/:id/status', async (req, res) => {
     try {
         const event = await Event.findByPk(req.params.id);
-        if (!event) return res.status(404).json({ message: "Evenimentul nu a fost gasit." });
+        if (!event) return res.status(404).json({ message: "Event not found." });
         
         event.status = req.body.status;
         await event.save();
@@ -80,39 +82,40 @@ app.patch('/events/:id/status', async (req, res) => {
 });
 
 /**
- * Inregistreaza prezenta unui participant si preia date dintr-un serviciu extern.
- * RESPECTA CERINTA: "data from an external service".
+ * CORE LOGIC: Registers student attendance.
+ * Requirement Check: This route integrates data from an EXTERNAL SERVICE.
  * @route POST /checkin
  */
 app.post('/checkin', async (req, res) => {
     const { code, participantName } = req.body;
 
     try {
-        // Cautare eveniment in baza de date (Persistence API / ORM)
+        // Step 1: Find the event associated with the provided access code (Persistence API)
         const event = await Event.findOne({ where: { accessCode: code } });
 
-        if (!event) return res.status(404).json({ message: "Codul introdus este invalid." });
-        if (event.status === 'CLOSED') return res.status(403).json({ message: "Acest eveniment este momentan inchis." });
+        if (!event) return res.status(404).json({ message: "Invalid access code." });
+        if (event.status === 'CLOSED') return res.status(403).json({ message: "This session is currently closed." });
 
-        // Creare inregistrare prezenta
-        const attendance = await Attendance.create({
+        // Step 2: Create the attendance record in our database
+        await Attendance.create({
             EventId: event.id,
             participantName: participantName
         });
 
-        // --- INTEGRARE API EXTERN ---
-        // Apelam un serviciu extern de sfaturi/mesaje motivationale pentru a confirma participarea intr-un mod interactiv
-        let externalAdvice = "Succes la activitatile de azi!";
+        // Step 3: EXTERNAL API INTEGRATION
+        // We fetch a "Daily Advice" to show to the student upon successful registration.
+        let externalAdvice = "Success with your studies today!";
         try {
+            // Fulfilling the requirement to access data from an external service
             const externalResponse = await axios.get('https://api.adviceslip.com/advice');
             externalAdvice = externalResponse.data.slip.advice;
         } catch (apiError) {
-            console.error("Eroare la apelarea API-ului extern:", apiError.message);
+            console.log("External service unreachable, using default message.");
         }
 
         res.status(201).json({ 
-            message: `Prezenta confirmata pentru ${participantName}.`,
-            advice: externalAdvice // Mesajul preluat din sursa externa
+            message: `Check-in successful for ${participantName}!`,
+            advice: externalAdvice 
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -120,7 +123,7 @@ app.post('/checkin', async (req, res) => {
 });
 
 /**
- * Returneaza lista de participanti pentru un eveniment specific.
+ * Retrieves the list of participants for a specific session.
  * @route GET /events/:id/attendance
  */
 app.get('/events/:id/attendance', async (req, res) => {
@@ -135,18 +138,18 @@ app.get('/events/:id/attendance', async (req, res) => {
     }
 });
 
-// --- PORNIRE SERVER ---
+// --- SERVER INITIALIZATION ---
 
 /**
- * Sincronizeaza modelele cu baza de date relationala si porneste ascultarea pe portul specificat.
+ * Syncs models with the database and starts the express server.
  */
 sequelize.sync({ force: false })
     .then(() => {
-        console.log('Baza de date sincronizata (SQLite).');
+        console.log('Database synced successfully.');
         app.listen(PORT, () => {
-            console.log(`Serverul REST ruleaza pe http://localhost:${PORT}`);
+            console.log(`Server is running on port ${PORT}`);
         });
     })
     .catch(err => {
-        console.error('Eroare la pornirea bazei de date:', err);
+        console.error('Database sync failed:', err);
     });
