@@ -25,7 +25,7 @@ function App() {
 
   const sendCheckIn = async (codeToSend) => {
     try {
-      const res = await axios.post('http://localhost:5001/checkin', { participantName: name, code: codeToSend })
+      const res = await axios.post('https://webtech-project-aura-cris-2026.onrender.com', { participantName: name, code: codeToSend })
       setMessage({ type: 'success', text: 'Prezenta a fost inregistrata in baza de date.' })
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Eroare la procesarea solicitarii.' })
@@ -33,7 +33,7 @@ function App() {
   }
 
   const createEvent = async () => {
-    const res = await axios.post('http://localhost:5001/groups/1/events', { 
+    const res = await axios.post('https://webtech-project-aura-cris-2026.onrender.com/groups/1/events', { 
       name: "Sesiune Tehnologii Web", 
       startTime: new Date(), 
       duration: 120 
