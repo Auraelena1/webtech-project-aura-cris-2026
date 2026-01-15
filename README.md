@@ -1,12 +1,12 @@
 
 # Attendance Monitoring Web App
 
-Project for Web Technologies — Developed by Dragomir Aura
+Project for Web Technologies — Developed by Dragomir Aura and Cristina Lapusneanu
 
 A web application designed for managing student attendance using QR codes and manual entry, featuring real-time synchronization and data export capabilities.
 
 ## Developer
-- Dragomir Aura - Faculty of Cybernetics, Statistics and Economic Informatics (CSIE)
+- Dragomir Aura and Cristina Lapusneanu - Faculty of Cybernetics, Statistics and Economic Informatics (CSIE)
 
 ## Deployment Links
 - **Frontend UI**: https://aura-attendance.onrender.com/
