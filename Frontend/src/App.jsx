@@ -8,6 +8,10 @@ import { Html5QrcodeScanner } from 'html5-qrcode'
 import { QRCodeSVG } from 'qrcode.react'
 import * as XLSX from 'xlsx'
 
+/**
+ * Attendance Management Application - Web Technologies Project 2026
+ * Developed by: Dragomir Aura
+ */
 function App() {
   const [role, setRole] = useState('student')
   const [activeTab, setActiveTab] = useState('scan')
@@ -17,10 +21,11 @@ function App() {
   const [eventData, setEventData] = useState(null)
   const [attendanceList, setAttendanceList] = useState([])
   const [loading, setLoading] = useState(false)
-  const [advice, setAdvice] = useState('')
+  const [advice, setAdvice] = useState('') // Stocăm sfatul de la API-ul extern
 
   const API_URL = 'https://webtech-project-aura-cris-2026.onrender.com';
 
+  // Logic for QR Scanner initialization
   useEffect(() => {
     let scanner;
     if (role === 'student' && activeTab === 'scan' && name.trim().length > 2) {
@@ -30,6 +35,7 @@ function App() {
     return () => { if (scanner) scanner.clear().catch(() => {}); };
   }, [role, activeTab, name.length > 2]);
 
+  // Real-time updates for the organizer (polling every 3 seconds)
   useEffect(() => {
     let interval;
     if (role === 'organizer' && eventData) {
@@ -46,9 +52,12 @@ function App() {
   const sendCheckIn = async (codeToSend) => {
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/checkin`, { participantName: name, code: codeToSend });
+      const res = await axios.post(`${API_URL}/checkin`, { 
+        participantName: name, 
+        code: codeToSend 
+      });
       setMessage({ type: 'success', text: 'Attendance recorded successfully!' });
-      setAdvice(res.data.advice);
+      setAdvice(res.data.advice); // Salvăm sfatul primit din API-ul extern
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Check-in failed.' });
     } finally { setLoading(false); }
@@ -59,102 +68,163 @@ function App() {
     try {
       try { await axios.post(`${API_URL}/groups`, { name: "WebTech Class" }); } catch (e) {}
       const res = await axios.post(`${API_URL}/groups/1/events`, { 
-        name: "Web Technologies Session", startTime: new Date(), duration: 120 
+        name: "Web Technologies Lab Session", 
+        startTime: new Date(), 
+        duration: 120 
       });
       const openRes = await axios.patch(`${API_URL}/events/${res.data.id}/status`, { status: 'OPEN' });
       setEventData(openRes.data);
+      setMessage({ type: 'success', text: 'Session is now live!' });
     } catch (err) {
-      setMessage({ type: 'error', text: 'Connection error.' });
+      setMessage({ type: 'error', text: 'Server connection error.' });
     } finally { setLoading(false); }
   }
 
-  const theme = { bg: '#FBFBFC', card: '#FFFFFF', primary: '#D81B60', accent: '#FCE4EC', text: '#2D3436', muted: '#636E72', border: '#EDF2F7' }
+  const exportToExcel = () => {
+    const dataToExport = attendanceList.map(item => ({
+      Student: item.participantName,
+      Time: new Date(item.checkInTime).toLocaleTimeString(),
+      Date: new Date(item.checkInTime).toLocaleDateString()
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+    XLSX.writeFile(workbook, `Attendance_Report_${new Date().toLocaleDateString()}.xlsx`);
+  }
+
+  const theme = {
+    bg: '#FBFBFC',
+    card: '#FFFFFF',
+    primary: '#D81B60', // Deep rose
+    accent: '#FCE4EC',
+    text: '#2D3436',
+    muted: '#636E72',
+    border: '#EDF2F7'
+  }
 
   return (
     <div style={{ 
-      minHeight: '100vh', width: '100%', backgroundColor: theme.bg, color: theme.text,
+      minHeight: '100vh', width: '100vw', backgroundColor: theme.bg, color: theme.text,
       fontFamily: "'Quicksand', sans-serif", display: 'flex', flexDirection: 'column',
-      alignItems: 'center', padding: '1.5rem', boxSizing: 'border-box'
+      alignItems: 'center', padding: '20px', boxSizing: 'border-box'
     }}>
       
-      {/* HEADER - Centrat și flexibil */}
-      <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+      {/* PROFESSIONAL HEADER */}
+      <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <GraduationCap color={theme.primary} /> Attendance Portal
           </h1>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: theme.muted }}>Web Technologies • 2026</p>
+          <p style={{ margin: 0, fontSize: '13px', color: theme.muted }}>Web Technologies • Academic Session 2026</p>
         </div>
-        <button onClick={() => setRole(role === 'student' ? 'organizer' : 'student')} style={{ backgroundColor: theme.accent, color: theme.primary, border: 'none', padding: '0.6rem 1.2rem', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem' }}>
+        <button 
+          onClick={() => setRole(role === 'student' ? 'organizer' : 'student')}
+          style={{ 
+            backgroundColor: theme.accent, color: theme.primary, border: 'none',
+            padding: '10px 20px', borderRadius: '10px', cursor: 'pointer', fontWeight: '700',
+            display: 'flex', alignItems: 'center', gap: '8px'
+          }}
+        >
+          {role === 'student' ? <Settings size={16}/> : <User size={16}/>}
           {role === 'student' ? 'Admin Access' : 'Student Mode'}
         </button>
       </div>
 
-      {/* CONTAINER PRINCIPAL - Centrat pe mijloc */}
       <main style={{ 
         width: '100%', maxWidth: '1000px', backgroundColor: theme.card, borderRadius: '24px', 
-        padding: '2rem', border: `1px solid ${theme.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', boxSizing: 'border-box'
+        padding: '40px', border: `1px solid ${theme.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
       }}>
         
         {role === 'student' ? (
-          <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-            <h2 style={{ textAlign: 'center', fontSize: '1.8rem', marginBottom: '2rem' }}>Check-in</h2>
-            <input 
-              style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: `2px solid ${theme.border}`, fontSize: '1rem', boxSizing: 'border-box', marginBottom: '1.5rem' }}
-              value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name (e.g. Aura Dragomir)"
-            />
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
-              <button onClick={() => setActiveTab('scan')} style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'scan' ? theme.primary : theme.accent, color: activeTab === 'scan' ? 'white' : theme.primary, fontWeight: '700' }}>QR Scan</button>
-              <button onClick={() => setActiveTab('manual')} style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'manual' ? theme.primary : theme.accent, color: activeTab === 'manual' ? 'white' : theme.primary, fontWeight: '700' }}>Code</button>
+          <div style={{ maxWidth: '450px', margin: '0 auto' }}>
+            <h2 style={{ textAlign: 'center', fontSize: '28px', marginBottom: '10px' }}>Welcome!</h2>
+            <p style={{ textAlign: 'center', color: theme.muted, marginBottom: '35px' }}>Please provide your name to register your attendance.</p>
+            
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', fontWeight: '700', marginBottom: '10px', fontSize: '14px' }}>Full Name</label>
+              <input 
+                style={{ width: '100%', padding: '15px', borderRadius: '12px', border: `2px solid ${theme.border}`, fontSize: '16px', outline: 'none', transition: '0.3s' }}
+                value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Aura Dragomir"
+              />
             </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
+              <button onClick={() => setActiveTab('scan')} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'scan' ? theme.primary : theme.accent, color: activeTab === 'scan' ? 'white' : theme.primary, fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Camera size={18}/> QR Scan
+              </button>
+              <button onClick={() => setActiveTab('manual')} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'manual' ? theme.primary : theme.accent, color: activeTab === 'manual' ? 'white' : theme.primary, fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Type size={18}/> Manual Code
+              </button>
+            </div>
+
             {activeTab === 'scan' && (
-              <div style={{ width: '100%', borderRadius: '15px', overflow: 'hidden', backgroundColor: '#f8f9fa', minHeight: '300px' }}>
-                {name.length > 2 ? <div id="reader"></div> : <p style={{ textAlign: 'center', padding: '2rem', color: theme.muted }}>Enter name to unlock camera</p>}
+              <div style={{ border: `3px solid ${theme.accent}`, borderRadius: '20px', overflow: 'hidden', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F9FA' }}>
+                {name.trim().length > 2 ? <div id="reader" style={{ width: '100%' }}></div> : <p style={{ color: theme.muted, padding: '20px', textAlign: 'center' }}>Please enter your name to unlock camera</p>}
               </div>
             )}
+
             {activeTab === 'manual' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <input style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: `2px solid ${theme.border}`, textAlign: 'center', fontSize: '1.4rem' }} value={code} onChange={(e) => setCode(e.target.value)} placeholder="000000" />
-                <button onClick={() => sendCheckIn(code)} style={{ backgroundColor: theme.primary, color: 'white', padding: '1rem', borderRadius: '12px', border: 'none', fontWeight: '700' }}>Submit</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <input style={{ width: '100%', padding: '15px', borderRadius: '12px', border: `2px solid ${theme.border}`, fontSize: '20px', textAlign: 'center', letterSpacing: '2px' }} value={code} onChange={(e) => setCode(e.target.value)} placeholder="ENTER CODE" />
+                <button disabled={loading} onClick={() => sendCheckIn(code)} style={{ width: '100%', backgroundColor: theme.primary, color: 'white', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>
+                  {loading ? 'Processing...' : 'Submit Attendance'}
+                </button>
               </div>
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2.5rem', justifyContent: 'center' }}>
-            {/* Secțiune QR - Se adaptează automat */}
-            <div style={{ flex: '1 1 300px', minWidth: '280px', textAlign: 'center' }}>
-              <h3 style={{ textAlign: 'left', marginBottom: '1.5rem' }}>Session Control</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: eventData ? '1fr 1.2fr' : '1fr', gap: '50px' }}>
+            <div style={{ textAlign: 'center', borderRight: eventData ? `1px solid ${theme.border}` : 'none', paddingRight: eventData ? '40px' : '0' }}>
+              <h2 style={{ fontSize: '24px', marginBottom: '30px', textAlign: 'left' }}>Session Control</h2>
               {!eventData ? (
-                <button onClick={createEvent} style={{ backgroundColor: theme.primary, color: 'white', padding: '1rem 2rem', borderRadius: '12px', border: 'none', fontWeight: '700' }}>Start Session</button>
+                <div style={{ padding: '60px 20px', backgroundColor: theme.bg, borderRadius: '20px', border: `2px dashed ${theme.border}` }}>
+                  <button onClick={createEvent} style={{ backgroundColor: theme.primary, color: 'white', border: 'none', padding: '18px 36px', borderRadius: '15px', fontWeight: '700', cursor: 'pointer', fontSize: '16px' }}>
+                    Start New Session
+                  </button>
+                  <p style={{ marginTop: '15px', color: theme.muted }}>This will generate a unique QR code for students.</p>
+                </div>
               ) : (
-                <div style={{ padding: '1rem', backgroundColor: theme.bg, borderRadius: '20px' }}>
-                  <div style={{ maxWidth: '250px', margin: '0 auto' }}>
-                    <QRCodeSVG value={eventData.accessCode} size={250} style={{ width: '100%', height: 'auto' }} fgColor={theme.primary} />
+                <div style={{ padding: '20px' }}>
+                  <QRCodeSVG value={eventData.accessCode} size={250} fgColor={theme.primary} />
+                  <div style={{ marginTop: '25px' }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: theme.muted, fontWeight: '700' }}>ACCESS CODE</p>
+                    <h3 style={{ fontSize: '40px', margin: '5px 0', color: theme.primary, letterSpacing: '5px' }}>{eventData.accessCode}</h3>
                   </div>
-                  <h4 style={{ fontSize: '2rem', color: theme.primary, margin: '1rem 0' }}>{eventData.accessCode}</h4>
                 </div>
               )}
             </div>
 
-            {/* Secțiune Tabel - Se mută sub QR pe mobil */}
             {eventData && (
-              <div style={{ flex: '1.2 1 350px', minWidth: '280px' }}>
-                <h3 style={{ marginBottom: '1.5rem' }}>Students ({attendanceList.length})</h3>
-                <div style={{ maxHeight: '350px', overflowY: 'auto', border: `1px solid ${theme.border}`, borderRadius: '15px' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                  <h3 style={{ margin: 0 }}>Registered Students ({attendanceList.length})</h3>
+                  <button onClick={exportToExcel} style={{ backgroundColor: '#2D3436', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Download size={14}/> Export XLSX
+                  </button>
+                </div>
+                <div style={{ maxHeight: '400px', overflowY: 'auto', border: `1px solid ${theme.border}`, borderRadius: '15px' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead style={{ backgroundColor: theme.bg }}>
+                    <thead style={{ backgroundColor: theme.bg, position: 'sticky', top: 0 }}>
                       <tr>
-                        <th style={{ textAlign: 'left', padding: '1rem', fontSize: '0.8rem' }}>NAME</th>
-                        <th style={{ textAlign: 'right', padding: '1rem', fontSize: '0.8rem' }}>TIME</th>
+                        <th style={{ textAlign: 'left', padding: '15px', fontSize: '12px', color: theme.muted }}>STUDENT NAME</th>
+                        <th style={{ textAlign: 'right', padding: '15px', fontSize: '12px', color: theme.muted }}>TIMESTAMP</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {attendanceList.map((row, i) => (
-                        <tr key={i} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                          <td style={{ padding: '1rem', fontWeight: '600' }}>{row.participantName}</td>
-                          <td style={{ padding: '1rem', textAlign: 'right', color: theme.muted }}>{new Date(row.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                        </tr>
-                      ))}
+                      {attendanceList.length === 0 ? (
+                        <tr><td colSpan="2" style={{ padding: '40px', textAlign: 'center', color: '#B2BEC3' }}>Waiting for the first student...</td></tr>
+                      ) : (
+                        attendanceList.map((row, i) => (
+                          <tr key={i} style={{ borderTop: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '15px', fontWeight: '600' }}>{row.participantName}</td>
+                            <td style={{ padding: '15px', textAlign: 'right', color: theme.muted, fontSize: '14px' }}>
+                              <Clock size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                              {new Date(row.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -163,16 +233,30 @@ function App() {
           </div>
         )}
 
+        {/* FEEDBACK MESSAGES & EXTERNAL API ADVICE */}
         {message && (
-          <div style={{ marginTop: '2rem', padding: '1.2rem', borderRadius: '15px', backgroundColor: message.type === 'success' ? '#F0FFF4' : '#FFF5F5', color: message.type === 'success' ? '#2F855A' : '#C53030', border: `1px solid ${message.type === 'success' ? '#C6F6D5' : '#FED7D7'}` }}>
-            <div style={{ fontWeight: '700' }}>{message.text}</div>
-            {advice && <div style={{ fontSize: '0.85rem', marginTop: '5px', fontStyle: 'italic' }}>"{advice}"</div>}
+          <div style={{ 
+            marginTop: '30px', padding: '20px', borderRadius: '15px', 
+            backgroundColor: message.type === 'success' ? '#F0FFF4' : '#FFF5F5', 
+            border: `1px solid ${message.type === 'success' ? '#C6F6D5' : '#FED7D7'}`,
+            color: message.type === 'success' ? '#2F855A' : '#C53030'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', marginBottom: advice ? '10px' : '0' }}>
+              {message.type === 'success' ? <Check size={20}/> : <AlertTriangle size={20}/>}
+              {message.text}
+            </div>
+            {message.type === 'success' && advice && (
+              <div style={{ padding: '10px', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '10px', fontSize: '14px', fontStyle: 'italic', display: 'flex', gap: '8px' }}>
+                <Sparkles size={16} /> <strong>Daily Advice:</strong> "{advice}"
+              </div>
+            )}
           </div>
         )}
       </main>
 
-      <footer style={{ marginTop: '2.5rem', textAlign: 'center', color: theme.muted, fontSize: '0.8rem' }}>
-        Designed by Aura & Cristina • CSIE 2026
+      <footer style={{ marginTop: '40px', textAlign: 'center', color: theme.muted, fontSize: '13px' }}>
+        <p style={{ margin: 0 }}>Designed & Developed by <strong>Dragomir Aura</strong></p>
+        <p style={{ margin: '5px 0' }}>Faculty of Cybernetics, Statistics and Economic Informatics • 2026</p>
       </footer>
     </div>
   )
