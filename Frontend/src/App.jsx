@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx'
 
 /**
  * Attendance Management Application - Web Technologies Project 2026
- * Developed by: Dragomir Aura
+ * Developed by: Dragomir Aura & Lapusneanu Cristina
  */
 function App() {
   const [role, setRole] = useState('student')
@@ -115,7 +115,7 @@ function App() {
           <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <GraduationCap color={theme.primary} /> Attendance Portal
           </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: theme.muted }}>Web Technologies • Academic Session 2026</p>
+          <p style={{ margin: 0, fontSize: '13px', color: theme.muted }}>Web Technologies • Project 2026</p>
         </div>
         <button 
           onClick={() => setRole(role === 'student' ? 'organizer' : 'student')}
@@ -137,7 +137,7 @@ function App() {
         
         {role === 'student' ? (
           <div style={{ maxWidth: '450px', margin: '0 auto' }}>
-            <h2 style={{ textAlign: 'center', fontSize: '28px', marginBottom: '10px' }}>Welcome!</h2>
+            <h2 style={{ textAlign: 'center', fontSize: '28px', marginBottom: '10px' }}>Start registration</h2>
             <p style={{ textAlign: 'center', color: theme.muted, marginBottom: '35px' }}>Please provide your name to register your attendance.</p>
             
             <div style={{ marginBottom: '25px' }}>
@@ -255,7 +255,7 @@ function App() {
       </main>
 
       <footer style={{ marginTop: '40px', textAlign: 'center', color: theme.muted, fontSize: '13px' }}>
-        <p style={{ margin: 0 }}>Designed & Developed by <strong>Dragomir Aura</strong></p>
+        <p style={{ margin: 0 }}>Designed & Developed by <strong>Dragomir Aura & Lapusneanu Cristina</strong></p>
         <p style={{ margin: '5px 0' }}>Faculty of Cybernetics, Statistics and Economic Informatics • 2026</p>
       </footer>
     </div>
